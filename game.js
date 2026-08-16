@@ -1,54 +1,5 @@
-/** pg-siegepush — 攻城推波 (逆向塔防) */
-
-function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
-function mulberry32(a) {
-  return function() {
-    let t = (a += 0x6d2b79f5);
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function deep(o) { return JSON.parse(JSON.stringify(o)); }
-
-
-export function createGame({ seed = 1 } = {}) {
-  return { seed, turn: 0, score: 0, level: 1, meter: 0, resources: 10, flags: {}, log: ["攻城推波：產兵／升級／進攻"], outcome: "playing", msg: "攻城推波：產兵／升級／進攻" };
-}
-export function getLegalActions(s) {
-  if (s.outcome !== "playing") return [];
-  return ["spawn","upgrade","push","eco"];
-}
-export function applyAction(state, action) {
-  const s = deep(state);
-  if (s.outcome !== "playing") return s;
-  const rnd = mulberry32(s.seed + s.turn * 19);
-  s.turn++;
-  
-  if (action === "eco") { s.resources += 4; s.msg = "收稅"; }
-  else if (action === "spawn") { if (s.resources >= 2) { s.resources -= 2; s.flags.army = (s.flags.army||0)+1; s.msg = "召募"; } else s.msg = "缺金"; }
-  else if (action === "upgrade") { if (s.resources >= 3) { s.resources -= 3; s.flags.pow = (s.flags.pow||0)+1; s.msg = "強化"; } else s.msg = "缺金"; }
-  else {
-    const atk = (s.flags.army||0) * (1 + (s.flags.pow||0));
-    s.meter += atk * 8;
-    s.score += atk * 5;
-    s.msg = "推波傷害 "+(atk*8);
-    if (rnd()<0.3) { s.flags.army = Math.max(0,(s.flags.army||0)-1); s.msg += "（有傷亡）"; }
-  }
-
-  if (s.resources < 0) s.resources = 0;
-  if (s.outcome === "playing" && s.level >= 5 && s.meter >= 100) {
-    s.outcome = "won";
-    s.msg = "目標達成！";
-  }
-  if (s.outcome === "playing" && (s.resources <= 0 && s.meter < 20 && s.turn > 8)) {
-    s.outcome = "lost";
-    s.msg = "資源崩盤";
-  }
-  return s;
-}
-export function summarize(s) {
-  return { turn: s.turn, level: s.level, meter: s.meter, score: s.score, resources: s.resources, msg: s.msg, outcome: s.outcome, flags: s.flags };
-}
-export function getOutcome(s) { return s.outcome; }
-
+const copy=o=>structuredClone(o);const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));function roll(seed){let t=seed+0x6d2b79f5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}
+export function createGame({seed=1}={}){return{seed,turn:0,wave:1,gold:12,income:5,units:{militia:0,archer:0,ram:0},push:0,baseHp:100,morale:5,score:0,outcome:"playing",msg:"召募軍隊後推進；每波結算收入"}}
+export const getLegalActions=s=>s.outcome==="playing"?["militia","archer","ram","advance"]:[];
+export function applyAction(state,a){if(state.outcome!=="playing")return state;const s=copy(state),cost={militia:2,archer:4,ram:7}[a];if(a!=="advance"){if(s.gold<cost){s.msg="軍資不足";return s}s.gold-=cost;s.units[a]++;s.msg=`召募${a==="militia"?"民兵":a==="archer"?"弓手":"攻城槌"}`;return s}const power=s.units.militia*2+s.units.archer*3+s.units.ram*7;if(!power){s.msg="沒有部隊可推進";return s}s.turn++;const defense=2+s.wave,net=Math.max(1,power-defense);s.push=clamp(s.push+net*4,0,100);s.baseHp=clamp(s.baseHp-(s.push>=50?net*5:0),0,100);s.score+=net*10;const loss=roll(s.seed+s.turn*13)<.55?1:0;if(loss){if(s.units.militia)s.units.militia--;else if(s.units.archer)s.units.archer--;else s.units.ram--}s.gold+=s.income;s.wave++;s.morale-=loss;s.msg=`第 ${s.wave-1} 波推進 ${net*4}%`;if(!s.baseHp){s.outcome="won";s.msg="敵堡崩塌，攻城勝利！"}else if(s.wave>12||s.morale<=0){s.outcome="lost";s.msg="軍心潰散，攻城失敗"}return s}
+export const summarize=s=>({wave:s.wave,gold:s.gold,push:s.push,baseHp:s.baseHp,morale:s.morale,score:s.score,msg:s.msg,outcome:s.outcome});export const getOutcome=s=>s.outcome;

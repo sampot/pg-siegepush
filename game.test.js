@@ -1,23 +1,2 @@
-import { describe, expect, it } from "vitest";
-import { createGame, applyAction, getLegalActions, getOutcome, summarize } from "./game.js";
-
-describe("pg-siegepush", () => {
-  it("creates a playable state with legal actions", () => {
-    const s = createGame({ seed: 42 });
-    expect(getOutcome(s)).toBe("playing");
-    const acts = getLegalActions(s);
-    expect(acts.length).toBeGreaterThan(0);
-    expect(summarize(s)).toBeTruthy();
-  });
-
-  it("applyAction advances without throwing", () => {
-    let s = createGame({ seed: 7 });
-    for (let i = 0; i < 12; i++) {
-      const acts = getLegalActions(s);
-      if (!acts.length) break;
-      s = applyAction(s, acts[i % acts.length]);
-      expect(s).toBeTruthy();
-    }
-    expect(["playing", "won", "lost"]).toContain(getOutcome(s));
-  });
-});
+import {describe,expect,it} from "vitest";import {createGame,applyAction,getLegalActions,getOutcome,summarize} from "./game.js";
+describe("pg-siegepush",()=>{it("starts with a complete playable state",()=>{const s=createGame({seed:42});expect(getOutcome(s)).toBe("playing");expect(getLegalActions(s).length).toBeGreaterThanOrEqual(3);expect(summarize(s).msg).toBeTruthy()});it("applies input immutably and advances play",()=>{const s=createGame({seed:7});const before=JSON.stringify(s);const n=applyAction(s,getLegalActions(s)[0]);expect(JSON.stringify(s)).toBe(before);expect(n).not.toEqual(s)});it("remains valid through a long deterministic session",()=>{let s=createGame({seed:99});for(let i=0;i<160&&getOutcome(s)==="playing";i++){const a=getLegalActions(s);s=applyAction(s,a[i%a.length])}expect(["playing","won","lost"]).toContain(getOutcome(s));expect(summarize(s)).toEqual(expect.objectContaining({outcome:getOutcome(s)}))})});
