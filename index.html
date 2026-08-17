@@ -1,1 +1,104 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#090b18"><meta name="description" content="用每波收入召募兵種，突破守軍與箭塔，摧毀敵方城堡。"><title>攻城推波</title><link rel="stylesheet" href="./styles.css"></head><body><main><header class="top"><div><p class="eyebrow">逆向塔防</p><h1>攻城推波</h1></div><button id="sound" class="sound" type="button" aria-pressed="true">♪ 音樂開</button></header><section id="lobby" class="panel"><img class="lobby-art" src="./assets/images/cover.png" alt=""><p class="blurb">用每波收入召募兵種，突破守軍與箭塔，摧毀敵方城堡。</p><div class="options"></div><button id="start" class="primary" type="button">開始挑戰</button><p class="meta">本機最佳 <strong id="best">0</strong> · <a href="./ATTRIBUTION.md">素材署名</a></p></section><section id="game" hidden><div class="gamebar"><span id="badge" class="badge">進行中</span><p id="hud"></p></div><div class="stage-wrap"><canvas id="stage" width="800" height="450" aria-label="攻城推波遊戲畫面"></canvas></div><p id="message" class="message" aria-live="polite"></p><div id="controls" class="controls" aria-label="遊戲控制"></div></section></main><script type="module" src="./app.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#141019" />
+    <title>攻城推波</title>
+    <meta
+      name="description"
+      content="攻城推波——逆向塔防。用每秒進帳的軍資組波次，把民兵、弓手、盾衛與攻城槌拖到三條推進路線上，拆掉箭塔、砸開城牆，在守軍推平你的大營之前拿下三道防線。"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>攻城推波</h1>
+      <div class="topbar-actions">
+        <button id="btn-sound" type="button" class="icon-btn" aria-pressed="true" aria-label="音效開關">
+          <span aria-hidden="true">🔊</span>
+        </button>
+        <button id="btn-reset" type="button" class="icon-btn" aria-label="重新開戰" disabled>
+          <span aria-hidden="true">↺</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hud" aria-label="戰況">
+        <div class="stat">
+          <span class="stat-label">軍資</span>
+          <b id="stat-gold">0</b>
+          <i id="stat-income">＋0／秒</i>
+        </div>
+        <div class="stat">
+          <span class="stat-label">人口</span>
+          <b id="stat-pop">0</b>
+          <i id="stat-popcap">／10</i>
+        </div>
+        <div class="stat">
+          <span class="stat-label">下一波</span>
+          <b id="stat-wave">0</b>
+          <i id="stat-wave-no">第 1 波</i>
+        </div>
+        <div class="stat">
+          <span class="stat-label">防線</span>
+          <b id="stat-stage">1</b>
+          <i id="stat-stage-of">／3</i>
+        </div>
+      </section>
+
+      <div class="stage" id="stage">
+        <canvas id="board" aria-label="戰場：把兵牌拖到某一路部署，拖動集結線決定推進到哪裡"></canvas>
+
+        <div class="overlay" id="overlay">
+          <div class="panel" role="group" aria-labelledby="panel-title">
+            <h2 id="panel-title">攻城推波</h2>
+            <p id="panel-body" class="panel-body"></p>
+            <dl id="panel-stats" class="panel-stats" hidden></dl>
+            <ul id="panel-guide" class="guide">
+              <li><b>部署</b>：按住下面的兵牌，拖到想去的那一路放手（或先點兵牌再點戰場）。</li>
+              <li><b>推進路線</b>：拖動每一路上的<b>集結線</b>，部隊只推進到那條線；壓到城牆前就是全力突擊。</li>
+              <li><b>兵種相剋</b>：攻城槌拆塔拆牆，對人幾乎沒殺傷力；弓手反過來。</li>
+            </ul>
+            <div class="panel-actions">
+              <button id="btn-primary" type="button" class="primary">開始攻城</button>
+              <button id="btn-secondary" type="button" class="ghost" hidden></button>
+            </div>
+            <details id="credits" class="credits">
+              <summary>素材署名</summary>
+              <p>
+                圖示：Kenney <b>Board Game Icons</b>；粒子：Kenney <b>Particle Pack</b>。 音效：Kenney
+                <b>Interface Sounds</b>、<b>Impact Sounds</b>、<b>RPG Audio</b>、<b>Music Jingles</b>； 配樂：OpenGameArt
+                <b>Battle Theme</b>。皆為 CC0（不要求署名，仍署名）； 戰場、城牆、部隊與 HUD 為本專案自繪。逐檔對照見
+                <code>ATTRIBUTION.md</code>，授權全文見 <code>assets/licenses/</code>。
+              </p>
+            </details>
+          </div>
+        </div>
+
+        <div class="toast" id="toast" aria-live="polite"></div>
+      </div>
+
+      <div class="lanes" id="lanes" role="group" aria-label="推進路線"></div>
+
+      <div class="roster" id="roster" role="radiogroup" aria-label="兵種"></div>
+
+      <p class="hint" id="hint">按住兵牌拖到某一路放手就部署；拖動集結線決定這一路推進到哪裡。</p>
+
+      <footer class="meta">
+        <span>最佳戰功 <b id="best-score">—</b></span>
+        <span>最遠防線 <b id="best-stage">—</b></span>
+        <a href="./ATTRIBUTION.md">素材署名</a>
+      </footer>
+    </main>
+
+    <div class="drag-ghost" id="drag-ghost" hidden aria-hidden="true"></div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

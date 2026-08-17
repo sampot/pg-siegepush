@@ -1,1 +1,578 @@
-:root{--bg:#090b18;--panel:#15192c;--ink:#f6f7fb;--muted:#aab2c8;--accent:#ffbf46}*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% -20%,#3a275b,#090b18 58%);color:var(--ink);font-family:system-ui,"PingFang TC",sans-serif}button,select{font:inherit}button,select{min-height:44px}main{width:min(920px,100%);margin:auto;padding:14px 12px 40px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.eyebrow{color:var(--accent);font-weight:800;letter-spacing:.14em;font-size:.72rem;margin:0}h1{font-size:clamp(1.55rem,6vw,2.6rem);margin:.1em 0}.sound{border:1px solid #ffffff33;border-radius:999px;background:#11162a;color:white;padding:0 14px}.panel{background:linear-gradient(145deg,#1e233c,#111427);border:1px solid #ffffff17;border-radius:20px;padding:18px;box-shadow:0 24px 70px #0008}.lobby-art{width:100%;height:150px;object-fit:cover;border-radius:14px;image-rendering:auto;filter:saturate(.9)}.blurb{font-size:1.05rem;line-height:1.6;color:#d9ddec}.options{display:grid;gap:10px;margin:16px 0}.options label{display:grid;gap:5px;color:var(--muted)}select{width:100%;border:1px solid #ffffff2b;border-radius:12px;background:#0c1020;color:white;padding:0 12px}.primary{width:100%;border:0;border-radius:13px;background:var(--accent);color:#1b1304;font-weight:900;padding:0 18px}.meta{color:var(--muted);font-size:.88rem}.meta a{color:var(--accent)}.gamebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}.badge{border-radius:999px;background:#3578e5;padding:5px 10px;font-weight:800}.badge[data-outcome=won]{background:#2fb879}.badge[data-outcome=lost]{background:#d64d66}#hud{color:var(--muted);margin:0;font-size:.88rem;flex:1}.stage-wrap{overflow:hidden;border-radius:17px;border:1px solid #ffffff24;background:#050711;box-shadow:0 20px 50px #0008}canvas{display:block;width:100%;aspect-ratio:16/9;touch-action:none}.message{text-align:center;min-height:1.5em;font-weight:750;color:#ffe2a9}.controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.controls button{border:1px solid #ffffff28;border-radius:14px;background:linear-gradient(#2d3555,#1c223b);color:white;font-weight:800;padding:8px;box-shadow:0 4px 0 #090b15}.controls button:active{transform:translateY(3px);box-shadow:0 1px 0 #090b15}.controls .primary{background:var(--accent);color:#1b1304}@media(min-width:600px){main{padding:22px}.panel{padding:24px}.options{grid-template-columns:repeat(2,1fr)}.controls{grid-template-columns:repeat(5,minmax(0,1fr))}.lobby-art{height:220px}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* 攻城推波 — 手機優先：預設就是窄螢幕的直式版面，大螢幕再往上加。 */
+
+:root {
+  --bg: #141019;
+  --card: #241d2ea6;
+  --card-solid: #1f1929;
+  --ink: #f4ecf7;
+  --muted: #a89bb4;
+  --accent: #f0b24a;
+  --accent-2: #5fc08a;
+  --ally: #8fc0f2;
+  --danger: #f0605f;
+  --line: rgba(244, 236, 247, 0.13);
+  --radius: 14px;
+  --tap: 46px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background:
+    radial-gradient(720px 420px at 50% -12%, rgba(224, 87, 79, 0.18), transparent 62%),
+    var(--bg);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── 頂列 ─────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: max(6px, env(safe-area-inset-top)) 12px 4px;
+}
+
+.topbar h1 {
+  margin: 0 auto 0 0;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.icon-btn[aria-pressed="false"] {
+  opacity: 0.45;
+}
+
+.icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* ── 版面骨架 ──────────────────────────────────────── */
+.shell {
+  flex: 1;
+  min-height: 0;
+  width: min(560px, 100%);
+  margin: 0 auto;
+  padding: 0 10px max(10px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── HUD ─────────────────────────────────────────── */
+.hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 4px 3px 5px;
+  text-align: center;
+  min-width: 0;
+}
+
+.stat-label {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.stat b {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat i {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 戰場 ─────────────────────────────────────────── */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 200px;
+}
+
+/* 畫布用絕對定位置中：尺寸由 JS 依容器算，才不會回頭把容器撐大。 */
+#board {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: #1a1422;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* ── 推進路線 ─────────────────────────────────────── */
+.lanes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.lane-chip {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.lane-chip b {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.lane-chip .lane-stance {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid currentcolor;
+}
+
+.lane-chip[data-stance="push"] {
+  color: var(--accent-2);
+  border-color: rgba(95, 192, 138, 0.45);
+}
+
+.lane-chip[data-stance="hold"] {
+  color: var(--accent);
+  border-color: rgba(240, 178, 74, 0.45);
+}
+
+/* ── 兵牌 ─────────────────────────────────────────── */
+.roster {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-height: 74px;
+  padding: 5px 2px 4px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  cursor: grab;
+  touch-action: none;
+  min-width: 0;
+}
+
+.card-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.card-name {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card-cost {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-gold {
+  background: var(--accent);
+}
+
+.dot-pop {
+  background: var(--ally);
+  margin-left: 4px;
+}
+
+.card[aria-checked="true"] {
+  border-color: var(--accent);
+  background: rgba(240, 178, 74, 0.16);
+}
+
+.card.is-poor {
+  opacity: 0.42;
+}
+
+/* 拖曳時跟著手指的兵牌影子。 */
+.drag-ghost {
+  position: fixed;
+  z-index: 20;
+  transform: translate(-50%, -140%);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(240, 178, 74, 0.94);
+  color: #241a08;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.drag-ghost[hidden] {
+  display: none;
+}
+
+/* ── 頁內面板（絕不使用瀏覽器原生 dialog） ────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  background: rgba(16, 12, 22, 0.86);
+  backdrop-filter: blur(3px);
+  border-radius: var(--radius);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.panel {
+  width: min(340px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--card-solid);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 15px 14px;
+  text-align: center;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.panel h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+}
+
+.panel h2[data-tone="win"] {
+  color: var(--accent-2);
+}
+
+.panel h2[data-tone="lose"] {
+  color: var(--danger);
+}
+
+.panel-body {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.guide {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+}
+
+.guide[hidden] {
+  display: none;
+}
+
+.guide li {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.guide b {
+  color: var(--ink);
+}
+
+.panel-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin: 0 0 12px;
+  text-align: left;
+}
+
+.panel-stats[hidden] {
+  display: none;
+}
+
+.panel-stats div {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 6px 9px;
+}
+
+.panel-stats dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.panel-stats dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.primary,
+.ghost {
+  min-height: 50px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  border: 1px solid transparent;
+}
+
+.primary {
+  background: var(--accent);
+  color: #2b1e05;
+  border: none;
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.ghost[hidden] {
+  display: none;
+}
+
+/* ── 場上飄字 ─────────────────────────────────────── */
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translate(-50%, -14px);
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(20, 15, 26, 0.94);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast[data-tone="good"] {
+  color: var(--accent-2);
+  border-color: rgba(95, 192, 138, 0.5);
+}
+
+.toast[data-tone="hot"] {
+  color: var(--accent);
+  border-color: rgba(240, 178, 74, 0.6);
+}
+
+.toast[data-tone="bad"] {
+  color: var(--danger);
+  border-color: rgba(240, 96, 95, 0.5);
+}
+
+.hint,
+.meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+}
+
+.meta a {
+  color: inherit;
+}
+
+.meta b {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 素材署名：收在面板底部的 details ─────────────────── */
+.credits {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.credits[hidden] {
+  display: none;
+}
+
+.credits summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  cursor: pointer;
+  list-style: none;
+  color: var(--muted);
+}
+
+.credits summary::-webkit-details-marker {
+  display: none;
+}
+
+.credits summary::after {
+  content: "＋";
+  margin-left: auto;
+}
+
+.credits[open] summary::after {
+  content: "－";
+}
+
+.credits p {
+  margin: 0 0 10px;
+}
+
+.credits b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── 矮螢幕：把非必要的字收起來，把高度留給戰場 ────────── */
+@media (max-height: 720px) {
+  .hint,
+  .meta {
+    display: none;
+  }
+
+  .card {
+    min-height: 66px;
+  }
+}
+
+/* ── 較寬的螢幕：字放大一點，面板放鬆一點 ──────────────── */
+@media (min-width: 560px) {
+  .topbar h1 {
+    font-size: 21px;
+  }
+
+  .stat b {
+    font-size: 20px;
+  }
+
+  .card-name {
+    font-size: 13px;
+  }
+
+  .panel-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .panel-actions .primary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition: none;
+  }
+}
